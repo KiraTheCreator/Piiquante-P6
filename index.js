@@ -26,7 +26,12 @@ const path = require("path");
 // Import des fonctions et middlewares exterieurs nécessaires pour les routes
 const { upload } = require("./multer");
 const { newUserCreation, loginUser, verifyToken } = require("./user");
-const { goToSauces, addSauce, goToUniqueSauce } = require("./sauces");
+const {
+  goToSauces,
+  addSauce,
+  goToUniqueSauce,
+  deleteSauce,
+} = require("./sauces");
 
 // 2 - MIDDLEWARES
 
@@ -54,7 +59,14 @@ app.get("/api/sauces", verifyToken, goToSauces);
 verifyToken, puis upload.single (plutot un middleware) et enfin addSauce */
 app.post("/api/sauces", verifyToken, upload.single("image"), addSauce);
 
+/* Route de requête de type GET à l'url indiqué, appelle les fonctions
+verifyToken, puis goToUniqueSauce */
 app.get("/api/sauces/:id", verifyToken, goToUniqueSauce);
+
+/* Route de requête de type DELETE à l'url indiqué, appelle les fonctions
+verifyToken, puis deleteSauce */
+app.delete("/api/sauces/:id", verifyToken, deleteSauce);
+
 /* Route de requête de type GET vers le "début" de l'api, renvoi
 une réponse pour être sur que le serveur tourne correctement */
 app.get("/", (req, res) => {
@@ -67,4 +79,4 @@ app.get("/", (req, res) => {
 app.use("/images", express.static(path.join(__dirname, "images")));
 
 // Le serveur écoute sur le port actuel : 3000
-app.listen(port, () => console.log("Le port actuel est le : " + port));
+app.listen(port, () => console.log("Le port actuel est le port " + port));

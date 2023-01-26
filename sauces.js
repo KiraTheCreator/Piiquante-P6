@@ -5,12 +5,17 @@
 // Import de "Product" crée à partir du schéma mongoose
 const { Product } = require("./mongoose");
 
+// Import de "fs" (file system) permettant la suppression de fichiers dans le système
+const { unlink } = require("fs");
+
 // 2 - FONCTIONS
 
 /* goToSauces récupère les sauces de la base de données
 et envoie ces données en réponse de la requête HTTP */
 function goToSauces(req, res) {
-  Product.find({}).then((products) => res.send(products));
+  Product.find({})
+    .then((products) => res.send(products))
+    .catch((error) => res.status(500).send(error));
 }
 
 /* addSauce ajoute une nouvelle sauce dans la base de données
@@ -29,8 +34,8 @@ function addSauce(req, res) {
   const manufacturer = sauce.manufacturer;
   const description = sauce.description;
   const mainPepper = sauce.mainPepper;
-  const heat = sauce.heat;
   const fileName = file.fileName;
+  const heat = sauce.heat;
 
   /* makeImageUrl existe uniquement dans addSauce, elle crée une URL
   pour chaques images téléchargées */
@@ -65,10 +70,55 @@ function addSauce(req, res) {
     .catch(console.error);
 }
 
+/* goToUniqueSauce récupère l'id de la sauce de la requête,
+puis utilise "findById" (méthode de mongoose) pour trouver la
+sauce correspondante et renvoi la sauce en réponse */
 function goToUniqueSauce(req, res) {
-  console.log(req.params);
+  // Stock l'id de la sauce de la requête dans une variable
+  const id = req.params.id;
+
+  // Trouve cette sauce grâce à son id dans la base de données
+  Product.findById(id)
+    .then((product) => {
+      res.send(product);
+    })
+    .catch((error) => res.status(500).send(error));
+}
+
+/* deleteSauce récupère l'id de la sauce de la requête*/
+function deleteSauce(req, res) {
+  // Stock l'id de la sauce de la requete dans une variable
+  const id = req.params.id;
+
+  // Supprime la sauce grâce à son id (sauce = productToDelete)
+  Product.findByIdAndDelete(id)
+    .then((productToDelete) => {
+      /* Appelle la fonction deleteImageFromFs (file system)
+       avec la sauce à supprimer en argument */
+      deleteImageFromFS(productToDelete);
+    })
+    .then(
+      res.send({ message: `le produit ayant pour id ${id} a été supprimé` })
+    )
+    .catch((err) => res.status(500).send({ message: err }));
+}
+
+/* deleteImageFromFs est utilisée dans la fonction deleteSauce 
+pour supprimer l'image de cette sauce dans le fichier /images */
+function deleteImageFromFS(productToDelete) {
+  // Récupère l'url de l'image de la sauce à supprimer et la stock dans la variable
+  const imageUrl = productToDelete.imageUrl;
+
+  // "Coupe" l'url de l'image afin de ne garder que le nom de l'image
+  const imageToDelete = imageUrl.split("/").at(-1);
+
+  // Supprime l'image du fichier /images en utilisant unlink
+  unlink(`images/${imageToDelete}`, (err) => {
+    console.error(err);
+  });
+  return productToDelete;
 }
 
 // 3 - EXPORTS
 
-module.exports = { goToSauces, addSauce, goToUniqueSauce };
+module.exports = { goToSauces, addSauce, goToUniqueSauce, deleteSauce };
