@@ -14,7 +14,7 @@ const app = express();
 // Stockage du port serveur dans une variable
 const port = 3000;
 
-/* Import du module CORS (authorise les requêtes et les demandes d'accès
+/* Import du module CORS (autorise les requêtes et les demandes d'accès
 quand on utilise plusieurs domaines (ports) et ajoute les en-têtes
 nécéssaires) */
 const cors = require("cors");
@@ -26,7 +26,7 @@ const path = require("path");
 // Import des fonctions et middlewares exterieurs nécessaires pour les routes
 const { upload } = require("./multer");
 const { newUserCreation, loginUser, verifyToken } = require("./user");
-const { goToSauces, addSauce } = require("./sauces");
+const { goToSauces, addSauce, goToUniqueSauce } = require("./sauces");
 
 // 2 - MIDDLEWARES
 
@@ -54,6 +54,7 @@ app.get("/api/sauces", verifyToken, goToSauces);
 verifyToken, puis upload.single (plutot un middleware) et enfin addSauce */
 app.post("/api/sauces", verifyToken, upload.single("image"), addSauce);
 
+app.get("/api/sauces/:id", verifyToken, goToUniqueSauce);
 /* Route de requête de type GET vers le "début" de l'api, renvoi
 une réponse pour être sur que le serveur tourne correctement */
 app.get("/", (req, res) => {

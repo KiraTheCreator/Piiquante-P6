@@ -58,10 +58,17 @@ function addSauce(req, res) {
   // Enregistre ce nouvel objet dans la base de données
   product
     .save()
-    .then(() => console.log("Produit enregistré", product))
+    .then((resProduct) => {
+      res.send({ message: resProduct });
+      return console.log("Produit enregistré", resProduct);
+    })
     .catch(console.error);
+}
+
+function goToUniqueSauce(req, res) {
+  console.log(req.params);
 }
 
 // 3 - EXPORTS
 
-module.exports = { goToSauces, addSauce };
+module.exports = { goToSauces, addSauce, goToUniqueSauce };
