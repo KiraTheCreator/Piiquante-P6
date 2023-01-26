@@ -1,36 +1,69 @@
-// 1 - VARIABLES GLOBALES
+/* INDEX.JS EST LE FICHIER PRINCIPAL DE MON API */
 
-require("dotenv").config(); // Création d'un fichier .env pour crypter des informations
-const express = require("express"); // Utilisation du module express
-const app = express(); // Appelle express
-const port = 3000; // Port utilisé par le serveur
-const cors = require("cors"); // Utilisation du module CORS (en-tête necessaires dans le corps de la requete)
+// 1 - IMPORTS, MODULES ET VARIABLES GLOBALES
+
+// Création d'un fichier .env et importe les variables d'environnement
+require("dotenv").config();
+
+// Import du module (framework) express, pour créer mon serveur
+const express = require("express");
+
+// Stockage de l'utilisation de express dans une variable
+const app = express();
+
+// Stockage du port serveur dans une variable
+const port = 3000;
+
+/* Import du module CORS (authorise les requêtes et les demandes d'accès
+quand on utilise plusieurs domaines (ports) et ajoute les en-têtes
+nécéssaires) */
+const cors = require("cors");
+
+/* Import du module path (gère les chemins d'accès, ici, est utilisé
+pour créer un chemin adapté (url) au fichier images et à son contenu) */
 const path = require("path");
+
+// Import des fonctions et middlewares exterieurs nécessaires pour les routes
 const { upload } = require("./multer");
 const { newUserCreation, loginUser, verifyToken } = require("./user");
 const { goToSauces, addSauce } = require("./sauces");
+
 // 2 - MIDDLEWARES
 
-app.use(cors()); // Utilise le module CORS
-app.use(express.json()); // Fonction pour traiter les payloads des requetes en JSON
+// Utilise le middleware CORS
+app.use(cors());
+
+// Utilise un middleware pour pouvoir traiter les données JSON
+app.use(express.json());
+
+// Utilise un middleware pour traiter les data form (html)
 app.use(express.urlencoded({ extended: true }));
 
-// 4 - ROUTES
+// 3 - ROUTES
 
-// Première requete de type post concernant le sign up
-app.post("/api/auth/signup", newUserCreation); // Appelle la fonction newUserCreation (voir fonctions en bas de page)
+/* Route de requête de type POST à l'url indiqué, appelle la fonction newUserCreation en réponse */
+app.post("/api/auth/signup", newUserCreation);
 
-// Deuxième requete de type post concernant le log in
-app.post("/api/auth/login", loginUser); // Appelle la fonction loginUser (voir fonctions en bas de page)
+/* Route de requête de type POST à l'url indiqué, appelle la fonction loginUser en réponse */
+app.post("/api/auth/login", loginUser);
 
-// Troisième requete de type get, concernant l'accès à la page sauces
-app.get("/api/sauces", verifyToken, goToSauces); // Appelle la fonction goToSauces (voir fonctions en bas de page)
+/* Route de reqûete de type GET à l'url indiqué, appelle les fonctions verifyToken et goToSauces */
+app.get("/api/sauces", verifyToken, goToSauces);
 
-// Quatrième requete de type post, concernant l'ajout de sauces dans le array et donc sur la page, appelle la fonction addSauces (voir fonctions en bas de page)
+/* Route de requête de type POST à l'url indiqué, appelle les fonctions 
+verifyToken, puis upload.single (plutot un middleware) et enfin addSauce */
 app.post("/api/sauces", verifyToken, upload.single("image"), addSauce);
 
+/* Route de requête de type GET vers le "début" de l'api, renvoi
+une réponse pour être sur que le serveur tourne correctement */
 app.get("/", (req, res) => {
-  res.send("Salut tout le monde");
+  res.send("Le serveur tourne correctement");
 });
+
+// 4 - LISTEN / MIDDLESWARES
+
+// Middleware pour accéder au fichier images
 app.use("/images", express.static(path.join(__dirname, "images")));
+
+// Le serveur écoute sur le port actuel : 3000
 app.listen(port, () => console.log("Le port actuel est le : " + port));

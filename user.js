@@ -1,82 +1,131 @@
+/* TOUT CE QUI CONCERNE LES USERS (SIGN UP, LOG IN, HASHAGE DU PASSWORD,
+   ATTRIBUTION DU TOKEN, VERIFICATION DE LA VALIDITÉ DU TOKEN. */
+
+// 1 - IMPORTS ET MODULES
+
+// Import de "user" crée à partir du schema mongoose
 const { user } = require("./mongoose");
-const bcrypt = require("bcrypt"); // Utilise bcrypt pour le hashage du password
-const jwt = require("jsonwebtoken"); // Utilise jsonwebtoken pour créer/manipuler un token attribué à l'utilisateur
-/* newUserCreation est une fonction qui va stocker un nouvel utilisateur dans
-la base de données si celui ci sign-up sur le site, si tout est ok, renvoie la réponse attendue :
-{ message: string } */
+
+// Import du module "bcrypt" pour le hashage des password
+const bcrypt = require("bcrypt");
+
+// Import du module "jsonwebtoken" pour créer et attribuer un token unique aux users
+const jwt = require("jsonwebtoken");
+
+// 2 - FONCTIONS
+
+/* newUserCreation prend en entrée les demandes et réponses HTTP
+de la première route de sign-up. Utilise les données email
+et mdp, hash le mdp, crée un compte utilisateur et l'enregistre dans 
+la base de données */
 async function newUserCreation(req, res) {
   try {
-    console.log("Signup request :", req.body);
-    //   Stockage des paramètres email et password de la requete dans des variables
+    // Récupère les données email, mdp
     const email = req.body.email;
     const password = req.body.password;
-    const hashedPassword = await hashPassword(password); // Appelle la fonction hashPassword
-    // Sauvegarde/enregistrement de chaque nouvel utilisateur (sign up) dans la base de données
+
+    // Hash le mdp grâce à la fonction
+    const hashedPassword = await hashPassword(password);
+
+    // Créer un utilisateur à l'aide des données (email et mdp hashé)
     const newUser = new user({ email: email, password: hashedPassword });
+
+    // Save l'utilisateur dans la base de données
     await newUser.save();
-    res.status(201).send({ message: "Utilisateur enregistré !" }); // Si tout s'est passé correctement renvoi status 201
+
+    // Envoi des réponses selon le cas
+    res.status(201).send({ message: "Utilisateur enregistré !" });
   } catch (err) {
-    res.status(409).send({ message: "Utilisateur déja enregistré : " + err }); // Si l'utilisateur est déja enregistré(email unique) ou pas enregistré envoie un message d'erreur
+    res.status(409).send({ message: "Utilisateur déja enregistré : " + err });
   }
 }
 
-/* hashPassword est une fonction qui va, à partir du password crée dans la fonction newUserCreation,
-le crypter à l'aide du module bcrypt et créer un nouveau password indéchiffrable */
+/* hashPassword utilise bcrypt pour hasher le mdp en entrée*/
 function hashPassword(password) {
-  const saltRounds = 10; // Nombre de "cycle de hashage"
+  // Nombre de "cycle de hashage"
+  const saltRounds = 10;
+
+  // Retourne le mpd hashé à l'aide du module bcrypt
   return bcrypt.hash(password, saltRounds);
 }
 
-/* loginUser est une fonction qui va vérifier si l'utilisateur qui essaie de se log in
-est déja enregistré dans la base de données, si oui, il va vérifier si le password
-qu'il entre correspond au password dans la base de données (les deux sont cryptés)
-Si tout est ok, renvoie la réponse attendue :
-{ userId: string, token: string }
- */
+/* loginUser réccupère l'email et le mdp de la requète puis trouve 
+l'email correspondant dans la base de données (méthode findOne de mongoose)
+et compare les mdp hashés (bcrypt.compare). Si le mdp est ok, appelle la
+fonction createToken */
 async function loginUser(req, res) {
   try {
+    // Récupère l'email et le mdp de la requète
     const email = req.body.email;
     const password = req.body.password;
-    const userToLog = await user.findOne({ email: email }); // Cherche dans la base de donnée si l'email utilisé est deja dedans
+
+    // Récupère l'utilisateur correspondant à l'email de la requète
+    const userToLog = await user.findOne({ email: email });
+
+    // Compare le mdp fourni avec celui stocké pour cet utilisateur
     const passwordIsCorrect = await bcrypt.compare(
       password,
-      userToLog.password // Compare si le mdp crypté est bien égal au mdp crypté deja associé à ce compte
+      userToLog.password
     );
+
+    // Si le mdp est inccorect
     if (!passwordIsCorrect) {
       res.status(403).send({ message: "Mot de passe incorrect" });
-    } // Si le mdp est incorrect, envoie une erreur 403
+    }
+
+    // Si le mdp est correct, crée un token à partir de l'email utilisateur
     const token = createToken(email);
-    res.status(200).send({ userId: userToLog._id, token: token }); // Si tout correspond, attribut un token unique à l'utilisateur avec la fonction createToken
+
+    // Envoi la réponse avec les infos demandées (ID et token)
+    res.status(200).send({ userId: userToLog._id, token: token });
   } catch (err) {
     console.error(err);
+
+    // Si une erreur est constatée
     res.status(401).send({ message: "Problème avec l'utilisateur" });
-  } // Sinon envoie une erreur 401
+  }
 }
 
-/* createToken est une fonction qui va à partir des informations du compte utilisateur,
-créer un token unique à attribuer à ce compte permettant le log in (utilise le module 
-  jsonwebtoken */
+/* createToken utilise jwt pour créer un token signé pour l'utilisateur
+le token sera valide 24h dans ce cas */
 function createToken(email) {
+  // Récupère le mdp dans le dossier .env
   const tokenPassword = process.env.TOKENPASSWORD;
+
+  // Utilise jwt pour créer un token unique avec l'email user et le mdp du token
   const token = jwt.sign({ email: email }, tokenPassword, { expiresIn: "24h" });
+
+  // Retourne le token crée
   return token;
 }
 
-/* La fonction verifyToken est une fonction qui va effectuer les dernieres vérifications
-pour accéder a la page sauce, si tout est ok, applique la fonction goToSauces */
+/* verifyToken vérifie si le token d'authenfication est valide si c'est le cas,
+appelle la fonction suivante */
 function verifyToken(req, res, next) {
-  console.log("Authenticate user");
-  const headerToRecover = req.header("Authorization"); // Réccupère le header "Authorization" qui correspond au token
-  const tokenToRecover = headerToRecover.split(" ")[1]; // "Coupe" le header pour enlever la partie bearer et séléctionner uniquement le token
+  // Récupère le header "Authorization" du token
+  const headerToRecover = req.header("Authorization");
+
+  // Enlève la partie "Bearer" afin de selectionner uniquement le token
+  const tokenToRecover = headerToRecover.split(" ")[1];
+
+  // Si le header est null
   if (headerToRecover == null)
     return res.status(403).send({ message: "Token invalide" });
+
+  // Si le token est null
   if (tokenToRecover == null)
     return res.status(403).send({ message: "Token innexistant" });
+
+  // Utilise jwt pour vérifier si le token est valide
   jwt.verify(tokenToRecover, process.env.TOKENPASSWORD, (err) => {
     if (err) return res.status(403).send({ message: "Token invalide " + err });
     console.log("Le token est bien valide, on continue");
+
+    // Appelle la fonction suivante
     next();
   });
 }
+
+// 3 - EXPORTS
 
 module.exports = { newUserCreation, loginUser, verifyToken };
