@@ -31,6 +31,7 @@ const {
   addSauce,
   goToUniqueSauce,
   deleteSauce,
+  modifySauce,
 } = require("./sauces");
 
 // 2 - MIDDLEWARES
@@ -66,6 +67,8 @@ app.get("/api/sauces/:id", verifyToken, goToUniqueSauce);
 /* Route de requête de type DELETE à l'url indiqué, appelle les fonctions
 verifyToken, puis deleteSauce */
 app.delete("/api/sauces/:id", verifyToken, deleteSauce);
+
+app.put("/api/sauces/:id", verifyToken, upload.single("image"), modifySauce);
 
 /* Route de requête de type GET vers le "début" de l'api, renvoi
 une réponse pour être sur que le serveur tourne correctement */

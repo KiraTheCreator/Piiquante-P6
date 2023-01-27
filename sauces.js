@@ -119,6 +119,34 @@ function deleteImageFromFS(productToDelete) {
   return productToDelete;
 }
 
+function modifySauce(req, res) {
+  const {
+    params: { id },
+  } = req;
+
+  const { body } = req;
+  console.log("body and params: ", body, id);
+
+  Product.findByIdAndUpdate(id, body)
+    .then((dataBaseResponse) => updateOrDeleteResponse(dataBaseResponse))
+    .catch((err) => console.error("PROBLEME UPDATING:", err));
+}
+
+function updateOrDeleteResponse(dataBaseResponse, res) {
+  if (dataBaseResponse == null) {
+    console.log("NOTHING TO UPDATE");
+    res.status(404).send({ message: "Nothing to update" });
+  }
+  console.log("ALL GOOD UPDATING:", dataBaseResponse);
+  res.status(203).send({ message: "Succesfully updated" });
+}
+
 // 3 - EXPORTS
 
-module.exports = { goToSauces, addSauce, goToUniqueSauce, deleteSauce };
+module.exports = {
+  goToSauces,
+  addSauce,
+  goToUniqueSauce,
+  deleteSauce,
+  modifySauce,
+};
