@@ -119,7 +119,7 @@ function verifyToken(req, res, next) {
   // Utilise jwt pour vérifier si le token est valide
   jwt.verify(tokenToRecover, process.env.TOKENPASSWORD, (err) => {
     if (err) return res.status(403).send({ message: "Token invalide " + err });
-    console.log("Le token est bien valide, on continue");
+    console.log("Token ok");
 
     // Appelle la fonction suivante
     next();

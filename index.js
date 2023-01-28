@@ -68,6 +68,8 @@ app.get("/api/sauces/:id", verifyToken, goToUniqueSauce);
 verifyToken, puis deleteSauce */
 app.delete("/api/sauces/:id", verifyToken, deleteSauce);
 
+/* Route de requête de type PUT à l'url indiqué, appelle les fonctions
+verifyToken, puis upload.single (plutot un middleware) et enfin modifySauce */
 app.put("/api/sauces/:id", verifyToken, upload.single("image"), modifySauce);
 
 /* Route de requête de type GET vers le "début" de l'api, renvoi
