@@ -18,7 +18,7 @@ const uri = `mongodb+srv://${dataBaseUser}:${dataBasePassword}@cluster0.ye1skoa.
 mongoose
   .connect(uri)
   .then(() => console.log("Connecté à mongo"))
-  .catch((err) => console.error("Error : ", err));
+  .catch((err) => console.error("Erreur : ", err));
 
 // 2 - SCHÉMAS ET MODÈLES
 

@@ -32,6 +32,7 @@ const {
   goToUniqueSauce,
   deleteSauce,
   modifySauce,
+  likeSauce,
 } = require("./sauces");
 
 // 2 - MIDDLEWARES
@@ -71,6 +72,10 @@ app.delete("/api/sauces/:id", verifyToken, deleteSauce);
 /* Route de requête de type PUT à l'url indiqué, appelle les fonctions
 verifyToken, puis upload.single (plutot un middleware) et enfin modifySauce */
 app.put("/api/sauces/:id", verifyToken, upload.single("image"), modifySauce);
+
+/* Route de requête de type POST à l'url indiqué, appelle les fonctions
+verifyToken, puis likeSauce*/
+app.post("/api/sauces/:id/like", verifyToken, likeSauce);
 
 /* Route de requête de type GET vers le "début" de l'api, renvoi
 une réponse pour être sur que le serveur tourne correctement */
